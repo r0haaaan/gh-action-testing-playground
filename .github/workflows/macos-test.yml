@@ -1,0 +1,36 @@
+name: Testing stuff on MacOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  macos-build:
+    name: MacOS
+    runs-on: macos-13
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' 
+      - name: Set up Docker
+        uses: crazy-max/ghaction-setup-docker@v3
+      - name: Set up Docker Buildx
+        run: |
+          brew install docker-buildx
+          mkdir -p ~/.docker/cli-plugins
+          ln -sfn /usr/local/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
+      - name: Run Integration tests
+        run: |
+          export DOCKER_HOST=unix:///Users/runner/.colima/default/docker.sock
+          python3 -m http.server &
+          docker run --rm --network=host alpine/curl  http://host.containers.internal:8000/
+          
+
